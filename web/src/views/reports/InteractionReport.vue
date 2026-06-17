@@ -83,10 +83,10 @@ import { DataAnalysis, TrendCharts, PieChart, Histogram, Search, ChatDotRound, T
 
 const dateRange = ref([])
 const overviewCards = ref([
-  { label: '总对话次数', value: '--', iconComp: ChatDotRound, bg: 'rgba(59,130,246,.16)', color: '#3b82f6' },
-  { label: '日均对话', value: '--', iconComp: Timer, bg: 'rgba(34,197,94,.14)', color: '#22c55e' },
-  { label: '独立用户数', value: '--', iconComp: User, bg: 'rgba(234,179,8,.15)', color: '#eab308' },
-  { label: '平均对话轮次', value: '--', iconComp: Refresh, bg: 'rgba(236,72,153,.16)', color: '#ec4899' }
+  { label: '总对话次数', value: '--', iconComp: ChatDotRound, bg: 'rgba(156,199,221,.28)', color: '#6099b8' },
+  { label: '日均对话', value: '--', iconComp: Timer, bg: 'rgba(158,170,104,.20)', color: '#7f8b4c' },
+  { label: '独立用户数', value: '--', iconComp: User, bg: 'rgba(240,214,111,.22)', color: '#a98621' },
+  { label: '平均对话轮次', value: '--', iconComp: Refresh, bg: 'rgba(223,159,201,.24)', color: '#b75693' }
 ])
 
 const trendChart = ref(null)
@@ -96,13 +96,19 @@ let charts = []
 
 function initChart(refEl, option) {
   if (!refEl.value) return
+  const existing = echarts.getInstanceByDom(refEl.value)
+  if (existing) existing.dispose()
   const chart = echarts.init(refEl.value)
   chart.setOption(option)
   charts.push(chart)
 }
 
-const BRAND_GREEN = '#3d7a5c'
-const CHART_COLORS = ['#3d7a5c', '#6ba386', '#8fc4a8', '#64748b', '#94a3b8', '#475569', '#b3d9c4', '#cbd5e1']
+const BRAND = '#9eaa68'
+const SKY = '#9cc7dd'
+const ACCENT = '#df9fc9'
+const WARM = '#f0d66f'
+const CLAY = '#d59b74'
+const CHART_COLORS = [SKY, ACCENT, BRAND, WARM, '#82b58c', CLAY, '#8b8f7a', '#b9d7e6']
 
 async function loadData() {
   try {
@@ -128,7 +134,14 @@ async function loadData() {
           data: res.daily.map(d => d.count),
           type: 'bar',
           barWidth: '60%',
-          itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#7dba9a' }, { offset: 1, color: BRAND_GREEN }]), borderRadius: [4, 4, 0, 0] }
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: SKY },
+              { offset: 0.58, color: ACCENT },
+              { offset: 1, color: BRAND }
+            ]),
+            borderRadius: [6, 6, 0, 0]
+          }
         }]
       })
     }
@@ -153,7 +166,14 @@ async function loadData() {
         yAxis: { type: 'category', inverse: true, data: res.intentDist.map(i => i.name), axisLabel: { color: '#4c4a42', fontSize: 11 }, axisTick: { show: false } },
         series: [{
           type: 'bar', data: res.intentDist.map(i => i.count),
-          itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#858ca3' }, { offset: 1, color: '#858ca3' }]), borderRadius: [0, 4, 4, 0] },
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: ACCENT },
+              { offset: 0.5, color: SKY },
+              { offset: 1, color: BRAND }
+            ]),
+            borderRadius: [0, 6, 6, 0]
+          },
           barWidth: 14
         }]
       })
@@ -170,5 +190,13 @@ onUnmounted(() => charts.forEach(c => c.dispose()))
 <style scoped>
 .chart-box {
   margin-bottom: 0;
+}
+
+.chart-box :deep(canvas) {
+  border-radius: 8px;
+}
+
+.card-box.chart-box {
+  border-color: rgba(96, 153, 184, 0.16);
 }
 </style>
