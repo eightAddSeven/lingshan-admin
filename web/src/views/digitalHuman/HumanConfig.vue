@@ -129,10 +129,17 @@ onMounted(async () => {
 async function handleSave() {
   saving.value = true
   try {
-    await digitalHumanAPI.updateConfig({ ...form })
-    ElMessage.success('配置已保存，小程序端刷新后生效')
+    const res = await digitalHumanAPI.updateConfig({ ...form })
+    console.log('[HumanConfig] 保存成功:', res)
+    // 如果云函数返回了 _id，同步更新 form
+    if (res && res.data && res.data._id) {
+      form._id = res.data._id
+    }
+    ElMessage.success('配置已保存，小程序端重启后即可看到更新')
   } catch (e) {
-    console.error('保存失败', e)
+    const msg = e?.message || e?.errorMessage || e?.error || '保存失败'
+    console.error('[HumanConfig] 保存失败:', msg, e)
+    ElMessage.error('保存失败: ' + msg)
   } finally {
     saving.value = false
   }
