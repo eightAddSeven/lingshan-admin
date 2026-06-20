@@ -52,6 +52,11 @@
         <el-icon><TrendCharts /></el-icon>
         <span>情感趋势</span>
       </el-menu-item>
+
+      <el-menu-item index="/marketing">
+        <el-icon><Money /></el-icon>
+        <span>营销分析</span>
+      </el-menu-item>
     </el-menu>
 
     <div class="sidebar-footer">
@@ -69,7 +74,10 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { Monitor, Moon, Search } from '@element-plus/icons-vue'
+import {
+  Monitor, Moon, Money, Search,
+  Odometer, Collection, ChatLineSquare, UserFilled, Histogram, TrendCharts
+} from '@element-plus/icons-vue'
 
 const route = useRoute()
 const activeMenu = computed(() => {

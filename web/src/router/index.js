@@ -45,6 +45,12 @@ const routes = [
         meta: { title: '数字人配置', icon: 'UserFilled' }
       },
       {
+        path: 'migrate-spots',
+        name: 'MigrateSpots',
+        component: () => import('../views/knowledge/MigrateSpots.vue'),
+        meta: { title: '景点字段迁移', hidden: true }
+      },
+      {
         path: 'reports/interaction',
         name: 'InteractionReport',
         component: () => import('../views/reports/InteractionReport.vue'),
@@ -55,6 +61,12 @@ const routes = [
         name: 'SentimentReport',
         component: () => import('../views/reports/SentimentReport.vue'),
         meta: { title: '情感趋势', icon: 'TrendCharts' }
+      },
+      {
+        path: 'marketing',
+        name: 'MarketingDashboard',
+        component: () => import('../views/marketing/MarketingDashboard.vue'),
+        meta: { title: '营销分析', icon: 'TrendCharts' }
       }
     ]
   }
