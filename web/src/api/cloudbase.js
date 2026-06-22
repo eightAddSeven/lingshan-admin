@@ -1,13 +1,17 @@
 /**
- * CloudBase JS SDK 初始化 — 直接操作云数据库
+ * CloudBase JS SDK 初始化 — Web 管理端使用匿名登录
  *
- * 老版 cloud1- 格式环境可能在多个区域，自动探测正确区域后连接。
+ * 安全模型（三层）：
+ * ① 应用层：Login.vue 用户名密码 → 云函数 adminLogin 验证 → 本地 token → 路由守卫
+ * ② 数据读取：Web 端匿名登录 → 集合设「所有用户可读」
+ * ③ 数据写入：通过云函数代理（云函数天然管理员权限，不依赖匿名用户身份）
+ *
+ * 只要集合权限配好，匿名用户无法写入，安全性足够。
  */
 import cloudbase from '@cloudbase/js-sdk'
 
 const ENV_ID = 'cloud1-d3gyqt3k21c692b8e'
 
-// 模块级引用，探测成功后更新
 let app = cloudbase.init({ env: ENV_ID })
 let db = app.database()
 let auth = app.auth()
@@ -15,7 +19,6 @@ let auth = app.auth()
 let loginPromise = null
 let loginSuccess = false
 
-// 候选区域列表
 const REGIONS = [undefined, 'ap-guangzhou', 'ap-shanghai', 'ap-beijing', 'ap-chengdu']
 
 async function tryLogin(region) {
@@ -29,7 +32,7 @@ async function tryLogin(region) {
 
   const d = instance.database()
   const testRes = await d.collection('knowledge').limit(1).count()
-  console.log(`[CloudBase] 区域 ${region || 'default'} 数据库验证通过, count:`, testRes.total)
+  console.log(`[CloudBase] 区域 ${region || 'default'} 验证通过, count:`, testRes.total)
 
   return { app: instance, db: d, auth: a }
 }
@@ -41,7 +44,6 @@ export async function initCloudBase() {
     for (const region of REGIONS) {
       try {
         const result = await tryLogin(region)
-        // 更新模块级引用，让其他模块导入的 db 指向正确的实例
         app = result.app
         db = result.db
         auth = result.auth
@@ -56,11 +58,10 @@ export async function initCloudBase() {
 
     loginSuccess = false
     throw new Error(
-      'CloudBase 连接失败：已尝试所有区域均无法连接。\n' +
-      '请在控制台确认：\n' +
-      '  1. "登录授权" → 匿名登录 已开启\n' +
-      '  2. "安全配置 → 安全域名" 包含 localhost:3000\n' +
-      '  3. 环境 ID 正确: ' + ENV_ID
+      'CloudBase 连接失败。请在控制台确认：\n' +
+      '  1. 匿名登录已开启\n' +
+      '  2. 安全域名包含 localhost:5173\n' +
+      '  3. 环境 ID: ' + ENV_ID
     )
   })()
 

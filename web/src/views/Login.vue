@@ -86,7 +86,7 @@ const loading = ref(false)
 const errorMsg = ref('')
 
 const form = reactive({
-  username: 'linghsn',
+  username: '',
   password: ''
 })
 
