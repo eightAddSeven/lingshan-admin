@@ -1,24 +1,42 @@
 <template>
   <el-container class="layout-container">
     <el-aside width="248px">
-      <Sidebar />
+      <Sidebar @open-search="showSearch = true" />
     </el-aside>
 
     <el-container class="workspace-shell">
       <el-header height="76px">
-        <HeaderBar />
+        <HeaderBar @open-search="showSearch = true" />
       </el-header>
 
       <el-main>
         <router-view />
       </el-main>
     </el-container>
+
+    <!-- 全局搜索对话框 -->
+    <GlobalSearchDialog v-model="showSearch" />
   </el-container>
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
 import Sidebar from '../components/Sidebar.vue'
 import HeaderBar from '../components/HeaderBar.vue'
+import GlobalSearchDialog from '../components/GlobalSearchDialog.vue'
+
+const showSearch = ref(false)
+
+// ⌘K / Ctrl+K 全局快捷键打开搜索
+function handleKeydown(e) {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault()
+    showSearch.value = true
+  }
+}
+
+onMounted(() => window.addEventListener('keydown', handleKeydown))
+onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 </script>
 
 <style scoped>

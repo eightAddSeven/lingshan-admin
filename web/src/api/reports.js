@@ -31,9 +31,11 @@ export async function getOverview({ startDate, endDate } = {}) {
 
     if (data && data.length > 0) {
       const doc = data[0]
-      const daily = doc.daily || {}
-      const totalChats = doc.totalConversations || 0
-      const uniqueUsers = (doc.uniqueOpenids || []).length
+      // 云函数将数据嵌套在 data 字段下，做兼容解包
+      const inner = doc.data || doc
+      const daily = inner.daily || {}
+      const totalChats = inner.totalConversations || 0
+      const uniqueUsers = (inner.uniqueOpenids || []).length
       const dayCount = Object.keys(daily).length || 1
       const dailyAvg = Math.round(totalChats / dayCount)
 
@@ -48,14 +50,14 @@ export async function getOverview({ startDate, endDate } = {}) {
         .sort((a, b) => a.date.localeCompare(b.date))
 
       // 景点分布
-      const spotCounts = doc.spotCounts || {}
+      const spotCounts = inner.spotCounts || {}
       const spotDist = Object.entries(spotCounts)
         .map(([name, count]) => ({ name, count }))
         .filter(item => item.count > 0)
         .sort((a, b) => b.count - a.count)
 
       // 意图分布
-      const intentCounts = doc.intentCounts || {}
+      const intentCounts = inner.intentCounts || {}
       const intentDist = Object.entries(intentCounts)
         .map(([name, count]) => ({ name, count }))
         .filter(item => item.count > 0)
@@ -83,19 +85,21 @@ export async function getSentiment() {
 
     if (data && data.length > 0) {
       const doc = data[0]
-      const answered = doc.answeredCount || 0
-      const unmet = doc.unmetCount || 0
+      // 云函数将数据嵌套在 data 字段下，做兼容解包
+      const inner = doc.data || doc
+      const answered = inner.answeredCount || 0
+      const unmet = inner.unmetCount || 0
       const total = answered + unmet || 1
       const satisfaction = Math.round((answered / total) * 100)
 
       // 每日情感趋势
-      const dailySent = doc.dailySentiment || {}
+      const dailySent = inner.dailySentiment || {}
       const dailySentiment = Object.entries(dailySent)
         .map(([date, val]) => ({ date, ...val }))
         .sort((a, b) => a.date.localeCompare(b.date))
 
       // 未命中问题 Top10
-      const unmetQuestions = doc.unmetQuestions || {}
+      const unmetQuestions = inner.unmetQuestions || {}
       const blindSpots = Object.entries(unmetQuestions)
         .map(([q, count]) => ({ keyword: decodeURIComponent(q), count }))
         .sort((a, b) => b.count - a.count)

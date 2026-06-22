@@ -84,11 +84,10 @@
       <aside class="side-column">
         <div class="card-box chart-box">
           <div class="section-heading compact">
-            <h3>意图分类分布</h3>
-            <span>游客问题结构</span>
+            <h3>知识库与FAQ概览</h3>
+            <span>内容资产统计</span>
           </div>
-          <div v-if="summary.intentDist && summary.intentDist.length > 0" ref="intentChart" class="chart donut-chart"></div>
-          <el-empty v-else description="暂无数据" :image-size="60" />
+          <div ref="knowledgeChart" class="chart donut-chart"></div>
         </div>
 
         <div class="card-box team-panel">
@@ -124,6 +123,8 @@
 import { ref, reactive, onMounted, onUnmounted, nextTick, markRaw } from 'vue'
 import * as echarts from 'echarts'
 import dashboardAPI from '../api/dashboard'
+import knowledgeAPI from '../api/knowledge'
+import faqAPI from '../api/faq'
 import {
   Calendar, MoreFilled, Odometer, TrendCharts,
   User, Timer, Tickets, Medal
@@ -143,7 +144,6 @@ const kpiCards = ref([
 // 汇总数据
 const summary = reactive({
   hotQA: [],
-  intentDist: [],
   hotSpots: []
 })
 
@@ -163,7 +163,7 @@ const teamMessages = [
 
 // 图表 refs
 const trendChart = ref(null)
-const intentChart = ref(null)
+const knowledgeChart = ref(null)
 const hotQaChart = ref(null)
 const spotChart = ref(null)
 let charts = []
@@ -230,24 +230,41 @@ function renderTrend(daily) {
   })
 }
 
-// 渲染意图饼图
-function renderIntent(intentDist) {
-  if (!intentChart.value) return
-  initChart(intentChart, {
+// 渲染知识库统计环形图
+function renderKnowledgeStats(stats) {
+  if (!knowledgeChart.value) return
+  initChart(knowledgeChart, {
     tooltip: {
       trigger: 'item',
       backgroundColor: '#fffaf0',
       borderColor: 'rgba(31,29,23,.12)',
-      textStyle: { color: '#181814', fontSize: 12 }
+      textStyle: { color: '#181814', fontSize: 12 },
+      formatter: '{b}: {c} 条 ({d}%)'
+    },
+    legend: {
+      bottom: 4,
+      textStyle: { color: '#4c4a42', fontSize: 11 },
+      itemWidth: 10,
+      itemHeight: 10,
+      itemGap: 12
     },
     color: CHART_COLORS,
     series: [{
       type: 'pie',
-      radius: ['55%', '80%'],
-      center: ['50%', '52%'],
-      data: intentDist,
-      label: { color: '#4c4a42', fontSize: 11 },
-      emphasis: { itemStyle: { shadowBlur: 12, shadowColor: 'rgba(0,0,0,0.12)' } }
+      radius: ['38%', '60%'],
+      center: ['50%', '42%'],
+      data: stats,
+      label: {
+        color: '#4c4a42',
+        fontSize: 11,
+        formatter: '{d}%',
+        position: 'outside'
+      },
+      labelLine: { lineStyle: { color: 'rgba(31,29,23,.18)' } },
+      emphasis: {
+        itemStyle: { shadowBlur: 12, shadowColor: 'rgba(0,0,0,0.12)' },
+        label: { fontSize: 14, fontWeight: 'bold' }
+      }
     }]
   })
 }
@@ -333,16 +350,36 @@ async function loadSummary() {
 
     // 更新汇总数据
     summary.hotQA = res.hotQA || []
-    summary.intentDist = res.intentDist || []
     summary.hotSpots = res.hotSpots || []
 
     // 更新图表
     await nextTick()
-    if (summary.intentDist.length > 0) renderIntent(summary.intentDist)
     if (summary.hotQA.length > 0) renderHotQA(summary.hotQA)
     if (summary.hotSpots.length > 0) renderHotSpots(summary.hotSpots)
   } catch (err) {
     console.error('加载大屏汇总失败:', err)
+  }
+}
+
+// 加载知识库统计（独立数据源，保证有数据）
+async function loadKnowledgeStats() {
+  try {
+    const [knowledgeRes, knowledgeFullRes, faqList] = await Promise.all([
+      knowledgeAPI.getList({ collection: 'knowledge', page: 1, pageSize: 1 }),
+      knowledgeAPI.getList({ collection: 'knowledge_full', page: 1, pageSize: 1 }),
+      faqAPI.getFAQList()
+    ])
+
+    const stats = [
+      { name: '基础知识库', value: knowledgeRes.total || 0 },
+      { name: '完整知识库', value: knowledgeFullRes.total || 0 },
+      { name: 'FAQ 问答对', value: Array.isArray(faqList) ? faqList.length : 0 }
+    ].filter(item => item.value > 0)
+
+    await nextTick()
+    renderKnowledgeStats(stats)
+  } catch (err) {
+    console.error('加载知识库统计失败:', err)
   }
 }
 
@@ -363,7 +400,7 @@ async function loadTrend(days) {
 }
 
 async function refreshAll() {
-  await Promise.all([loadSummary(), loadTrend(30)])
+  await Promise.all([loadSummary(), loadTrend(30), loadKnowledgeStats()])
 }
 
 onMounted(() => refreshAll())
@@ -489,7 +526,7 @@ onUnmounted(() => disposeAllCharts())
 }
 
 .donut-chart {
-  height: 265px;
+  height: 300px;
 }
 
 .small-chart {

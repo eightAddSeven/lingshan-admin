@@ -78,9 +78,9 @@ import reportsAPI from '../../api/reports'
 import { TrendCharts, WarningFilled, QuestionFilled, CircleCheckFilled, CircleCloseFilled, StarFilled } from '@element-plus/icons-vue'
 
 const cards = ref([
-  { label: '已回答问题', value: '--', iconComp: CircleCheckFilled, bg: 'rgba(34,197,94,.14)', color: '#22c55e' },
-  { label: '未满足问题', value: '--', iconComp: CircleCloseFilled, bg: 'rgba(245,158,11,.14)', color: '#f59e0b' },
-  { label: '用户满意度', value: '--', iconComp: StarFilled, bg: 'rgba(236,72,153,.16)', color: '#ec4899' }
+  { label: '已回答问题', value: '--', iconComp: CircleCheckFilled, bg: 'rgba(156,199,221,.28)', color: '#6099b8' },
+  { label: '未满足问题', value: '--', iconComp: CircleCloseFilled, bg: 'rgba(240,214,111,.22)', color: '#a98621' },
+  { label: '用户满意度', value: '--', iconComp: StarFilled, bg: 'rgba(223,159,201,.24)', color: '#b75693' }
 ])
 
 const unmetList = ref([])
@@ -90,10 +90,17 @@ let charts = []
 
 function initChart(refEl, option) {
   if (!refEl.value) return
+  const existing = echarts.getInstanceByDom(refEl.value)
+  if (existing) existing.dispose()
   const chart = echarts.init(refEl.value)
   chart.setOption(option)
   charts.push(chart)
 }
+
+const SKY = '#9cc7dd'
+const ACCENT = '#df9fc9'
+const BRAND = '#9eaa68'
+const WARM = '#f0d66f'
 
 async function loadData() {
   try {
@@ -115,9 +122,9 @@ async function loadData() {
         xAxis: { type: 'category', data: res.dailySentiment.map(d => d.date), axisLine: { lineStyle: { color: 'rgba(31,29,23,.12)' } }, axisTick: { show: false }, axisLabel: { color: '#817c70', fontSize: 11 } },
         yAxis: { type: 'value', splitLine: { lineStyle: { color: 'rgba(31,29,23,.08)' } }, axisLabel: { color: '#817c70', fontSize: 11 } },
         series: [
-          { name: '满意', type: 'line', data: res.dailySentiment.map(d => d.good), stack: 'total', smooth: true, areaStyle: { opacity: 0.6 }, itemStyle: { color: '#22c55e' }, lineStyle: { width: 2 } },
-          { name: '一般', type: 'line', data: res.dailySentiment.map(d => d.fair), stack: 'total', smooth: true, areaStyle: { opacity: 0.6 }, itemStyle: { color: '#f59e0b' }, lineStyle: { width: 2 } },
-          { name: '未满足', type: 'line', data: res.dailySentiment.map(d => d.poor), stack: 'total', smooth: true, areaStyle: { opacity: 0.6 }, itemStyle: { color: '#ef4444' }, lineStyle: { width: 2 } }
+          { name: '满意', type: 'line', data: res.dailySentiment.map(d => d.good), stack: 'total', smooth: true, areaStyle: { opacity: 0.42 }, itemStyle: { color: SKY }, lineStyle: { width: 2, color: SKY } },
+          { name: '一般', type: 'line', data: res.dailySentiment.map(d => d.fair), stack: 'total', smooth: true, areaStyle: { opacity: 0.42 }, itemStyle: { color: WARM }, lineStyle: { width: 2, color: WARM } },
+          { name: '未满足', type: 'line', data: res.dailySentiment.map(d => d.poor), stack: 'total', smooth: true, areaStyle: { opacity: 0.42 }, itemStyle: { color: ACCENT }, lineStyle: { width: 2, color: ACCENT } }
         ]
       })
     }
@@ -130,7 +137,7 @@ async function loadData() {
         yAxis: { type: 'category', inverse: true, data: res.blindSpots.map(b => b.keyword), axisLabel: { width: 80, overflow: 'truncate', color: '#4c4a42', fontSize: 11 }, axisTick: { show: false } },
         series: [{
           type: 'bar', data: res.blindSpots.map(b => b.count),
-          itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: '#fbbf24' }, { offset: 1, color: '#f59e0b' }]), borderRadius: [0, 4, 4, 0] },
+          itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: ACCENT }, { offset: 0.52, color: SKY }, { offset: 1, color: BRAND }]), borderRadius: [0, 6, 6, 0] },
           barWidth: 14
         }]
       })

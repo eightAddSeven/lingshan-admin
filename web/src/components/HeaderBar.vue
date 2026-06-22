@@ -1,9 +1,10 @@
 <template>
   <div class="header-bar">
     <div class="header-left">
-      <div class="search-pill">
+      <div class="search-pill" @click="$emit('open-search')">
         <el-icon><Search /></el-icon>
         <span>搜索模块、景点、FAQ</span>
+        <kbd class="search-shortcut">⌘K</kbd>
       </div>
       <el-breadcrumb separator="/">
         <el-breadcrumb-item :to="{ path: '/dashboard' }">
@@ -16,13 +17,6 @@
     </div>
 
     <div class="header-right">
-      <el-button class="icon-button" circle>
-        <el-icon><Bell /></el-icon>
-      </el-button>
-      <el-button class="share-button">
-        <el-icon><Share /></el-icon>
-        <span>共享</span>
-      </el-button>
       <div class="user-info">
         <el-avatar :size="32" class="user-avatar">
           {{ authStore.username?.charAt(0)?.toUpperCase() }}
@@ -42,7 +36,9 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
-import { Bell, HomeFilled, Search, Share, SwitchButton } from '@element-plus/icons-vue'
+import { HomeFilled, Search, SwitchButton } from '@element-plus/icons-vue'
+
+defineEmits(['open-search'])
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -94,6 +90,25 @@ function handleLogout() {
     rgba(255, 250, 240, 0.86);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
   font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-pill:hover {
+  border-color: rgba(96, 153, 184, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62), 0 0 0 3px rgba(96, 153, 184, 0.08);
+}
+
+.search-shortcut {
+  margin-left: auto;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-size: 10px;
+  font-family: inherit;
+  color: var(--text-secondary);
+  background: rgba(255, 250, 240, 0.7);
+  letter-spacing: 0.02em;
 }
 
 /* 面包屑样式覆盖 */
@@ -117,20 +132,6 @@ function handleLogout() {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.icon-button,
-.share-button {
-  border: 1px solid var(--border);
-  color: var(--text-regular);
-  background: rgba(255, 250, 240, 0.82);
-}
-
-.icon-button:hover,
-.share-button:hover {
-  border-color: rgba(96, 153, 184, 0.5);
-  color: var(--text-primary);
-  background: var(--sky-soft);
 }
 
 .user-info {
@@ -158,7 +159,6 @@ function handleLogout() {
 
 @media (max-width: 720px) {
   .search-pill,
-  .share-button,
   .username {
     display: none;
   }

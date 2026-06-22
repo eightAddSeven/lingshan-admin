@@ -10,7 +10,7 @@
       </div>
     </div>
 
-    <div class="quick-search">
+    <div class="quick-search" @click="$emit('open-search')">
       <el-icon><Search /></el-icon>
       <span>搜索模块</span>
     </div>
@@ -79,6 +79,8 @@ import {
   Odometer, Collection, ChatLineSquare, UserFilled, Histogram, TrendCharts
 } from '@element-plus/icons-vue'
 
+defineEmits(['open-search'])
+
 const route = useRoute()
 const activeMenu = computed(() => {
   const path = route.path
@@ -142,6 +144,13 @@ const activeMenu = computed(() => {
   background: rgba(255, 250, 240, 0.06);
   color: rgba(255, 250, 240, 0.66);
   font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.quick-search:hover {
+  border-color: rgba(156, 199, 221, 0.5);
+  background: rgba(255, 250, 240, 0.1);
 }
 
 .el-menu {

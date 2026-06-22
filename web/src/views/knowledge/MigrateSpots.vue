@@ -177,17 +177,22 @@ async function doMigrate() {
   gap: 32px;
   margin-bottom: 20px;
   padding: 16px 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
+  background: rgba(255, 250, 240, 0.58);
+  border: 1px solid var(--border);
+  border-radius: 12px;
 }
-.stat-item { font-size: 14px; color: #666; }
-.stat-num { font-size: 24px; font-weight: 700; color: #15130f; margin-right: 4px; }
+.stat-item { font-size: 14px; color: var(--text-regular); }
+.stat-num { font-size: 24px; font-weight: 700; color: var(--text-primary); margin-right: 4px; }
 .migrate-actions { display: flex; gap: 12px; margin-bottom: 16px; }
 .migrate-log {
-  background: #1e1e1e; color: #ddd; padding: 16px; border-radius: 8px;
+  background: #11110f;
+  color: rgba(255, 250, 240, 0.78);
+  padding: 16px;
+  border: 1px solid rgba(156, 199, 221, 0.22);
+  border-radius: 12px;
   font-family: monospace; font-size: 12px; max-height: 400px; overflow-y: auto; line-height: 1.8;
 }
-.log-line.success { color: #4caf50; }
-.log-line.error { color: #f44336; }
-.log-line.info { color: #90caf9; }
+.log-line.success { color: #9eaa68; }
+.log-line.error { color: #df9fc9; }
+.log-line.info { color: #9cc7dd; }
 </style>

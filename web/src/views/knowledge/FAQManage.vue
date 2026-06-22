@@ -10,16 +10,30 @@
 
     <div class="card-box">
       <div class="toolbar">
-        <el-tag type="info" effect="plain" size="large">
-          共 {{ faqList.length }} 条 FAQ
-        </el-tag>
+        <div class="toolbar-left">
+          <el-tag type="info" effect="plain" size="large">
+            共 {{ filteredList.length }} 条 FAQ
+          </el-tag>
+          <el-input
+            v-model="keyword"
+            placeholder="搜索问题或回答..."
+            clearable
+            style="width: 260px"
+            @clear="keyword = ''"
+            @keyup.enter="keyword = keyword"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </div>
         <el-button type="primary" @click="openAddDialog">
           <el-icon><Plus /></el-icon>
           新增 FAQ
         </el-button>
       </div>
 
-      <el-table :data="faqList" stripe style="width: 100%; margin-top: 16px" v-loading="loading">
+      <el-table :data="filteredList" stripe style="width: 100%; margin-top: 16px" v-loading="loading">
         <template #empty>
           <el-empty description="暂无 FAQ 数据" :image-size="80" />
         </template>
@@ -70,13 +84,24 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import faqAPI from '../../api/faq'
-import { ChatLineSquare, Plus, Check } from '@element-plus/icons-vue'
+import { ChatLineSquare, Plus, Check, Search } from '@element-plus/icons-vue'
 
 const faqList = ref([])
+const keyword = ref('')
 const loading = ref(false)
+
+// 客户端搜索过滤
+const filteredList = computed(() => {
+  const kw = keyword.value.trim().toLowerCase()
+  if (!kw) return faqList.value
+  return faqList.value.filter(item =>
+    (item.q && item.q.toLowerCase().includes(kw)) ||
+    (item.a && item.a.toLowerCase().includes(kw))
+  )
+})
 const saving = ref(false)
 const dialogVisible = ref(false)
 const editingId = ref(null)      // 正在编辑的 FAQ 的 _id，null 表示新增
@@ -163,6 +188,18 @@ onMounted(() => loadFAQ())
   border: 1px solid var(--border);
   border-radius: 12px;
   background: rgba(255, 250, 240, 0.58);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .card-box :deep(.el-table) {
