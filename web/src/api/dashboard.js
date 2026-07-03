@@ -174,12 +174,12 @@ export async function getSummary() {
       console.log('[Dashboard] analytics 内层数据 keys:', Object.keys(inner))
       console.log('[Dashboard] intentCounts:', inner.intentCounts)
 
-      // 计算今日和本周的对话量
+      // 计算今日和本周的对话量（兼容旧格式 "7-3" 和新格式 "7-03"）
       const daily = inner.daily || {}
       const todayKey = getTodayKey()
       const weekKeys = getWeekKeys()
-      const todayCount = daily[todayKey] || 0
-      const weekCount = weekKeys.reduce((sum, k) => sum + (daily[k] || 0), 0)
+      const todayCount = getDailyCount(daily, todayKey)
+      const weekCount = weekKeys.reduce((sum, k) => sum + getDailyCount(daily, k), 0)
 
       // 热门问答 Top10
       const qCounts = inner.questionCounts || {}
@@ -217,9 +217,9 @@ export async function getSummary() {
         hotSpots
       }
 
-      // 如果 analytics 数据全为零，降级到 chat_history
-      if (result.kpi.totalCount === 0) {
-        console.log('[Dashboard] analytics 数据全为零，降级到 chat_history')
+      // 数据全为零，或今日计数异常（日期键格式不匹配等），降级到 chat_history
+      if (result.kpi.totalCount === 0 || result.kpi.todayCount === 0) {
+        console.log('[Dashboard] analytics 数据异常（total=' + result.kpi.totalCount + ', today=' + result.kpi.todayCount + '），降级到 chat_history')
         const fallback = await computeFromChatHistory()
         if (fallback) return fallback
       }
@@ -262,7 +262,7 @@ export async function getTrend(days = 30) {
           const d = new Date()
           d.setDate(d.getDate() - i)
           const key = `${d.getMonth() + 1}-${String(d.getDate()).padStart(2, '0')}`
-          dailyList.push({ date: key, count: daily[key] || 0 })
+          dailyList.push({ date: key, count: getDailyCount(daily, key) })
         }
         return { daily: dailyList }
       }
@@ -319,6 +319,22 @@ function getWeekKeys() {
     keys.push(`${d.getMonth() + 1}-${String(d.getDate()).padStart(2, '0')}`)
   }
   return keys
+}
+
+// 在 daily 对象中查找日期键，兼容补零/不补零两种格式，并求和以防双键共存
+function getDailyCount(daily, dateKey) {
+  let count = daily[dateKey] || 0
+  // 尝试另一种格式并累加（处理云函数格式切换过渡期双键共存的情况）
+  const parts = dateKey.split('-')
+  if (parts.length === 2) {
+    const altKey = parts[1].length === 2
+      ? `${parts[0]}-${parseInt(parts[1], 10)}`      // "7-03" → "7-3"
+      : `${parts[0]}-${String(parseInt(parts[1], 10)).padStart(2, '0')}`  // "7-3" → "7-03"
+    if (altKey !== dateKey) {
+      count += (daily[altKey] || 0)
+    }
+  }
+  return count
 }
 
 const dashboardAPI = { getSummary, getTrend }

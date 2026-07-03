@@ -82,6 +82,24 @@
       </section>
 
       <aside class="side-column">
+        <!-- 情感预警卡片 -->
+        <div class="card-box alert-card" :class="sentimentAlert.level" v-if="sentimentAlert.show">
+          <div class="section-heading compact">
+            <h3>
+              <el-icon><WarningFilled /></el-icon>
+              {{ sentimentAlert.title }}
+            </h3>
+          </div>
+          <p class="alert-msg">{{ sentimentAlert.message }}</p>
+          <div class="alert-stats">
+            <span>负面占比 <strong>{{ sentimentAlert.negativeRate }}%</strong></span>
+            <span>阈值 {{ sentimentAlert.threshold }}%</span>
+          </div>
+          <el-button size="small" type="warning" style="margin-top: 10px" @click="$router.push('/reports/sentiment')">
+            查看详情
+          </el-button>
+        </div>
+
         <div class="card-box chart-box">
           <div class="section-heading compact">
             <h3>知识库与FAQ概览</h3>
@@ -125,9 +143,10 @@ import * as echarts from 'echarts'
 import dashboardAPI from '../api/dashboard'
 import knowledgeAPI from '../api/knowledge'
 import faqAPI from '../api/faq'
+import reportsAPI from '../api/reports'
 import {
   Calendar, MoreFilled, Odometer, TrendCharts,
-  User, Timer, Tickets, Medal
+  User, Timer, Tickets, Medal, WarningFilled
 } from '@element-plus/icons-vue'
 
 const loading = ref(false)
@@ -153,6 +172,16 @@ const serviceTasks = [
   { tag: '#预警', title: '门票咨询高峰', desc: '午后问询量上升，需检查 FAQ 命中率。', owner: '客服', progress: '42%', tone: 'yellow' },
   { tag: '#巡检', title: '数字人播报测试', desc: '确认移动端语音播报链路。', owner: '导览', progress: '88%', tone: 'cyan' }
 ]
+
+// 情感预警
+const sentimentAlert = reactive({
+  show: false,
+  level: 'normal',
+  title: '用户情绪监测',
+  message: '',
+  negativeRate: 0,
+  threshold: 20
+})
 
 // 协同消息（静态）
 const teamMessages = [
@@ -399,8 +428,48 @@ async function loadTrend(days) {
   }
 }
 
+// 加载情感预警数据
+async function loadSentimentAlert() {
+  try {
+    const res = await reportsAPI.getSentiment()
+    if (!res?.dailySentiment || res.dailySentiment.length === 0) return
+
+    // 取最近一天的数据
+    const today = res.dailySentiment[res.dailySentiment.length - 1]
+    const positive = today.positive || 0
+    const neutral = today.neutral || 0
+    const negative = today.negative || 0
+    const total = positive + neutral + negative
+
+    if (total === 0) {
+      sentimentAlert.show = false
+      return
+    }
+
+    const negativeRate = Math.round((negative / total) * 100)
+
+    if (negativeRate > 30) {
+      sentimentAlert.show = true
+      sentimentAlert.level = 'danger'
+      sentimentAlert.title = '⚠️ 用户负面情绪激增'
+      sentimentAlert.message = `今日负面情绪占比达 ${negativeRate}%，已超过严重阈值。建议立即检查知识库覆盖和 FAQ 命中率。`
+    } else if (negativeRate > sentimentAlert.threshold) {
+      sentimentAlert.show = true
+      sentimentAlert.level = 'warning'
+      sentimentAlert.title = '📊 用户负面情绪偏高'
+      sentimentAlert.message = `今日负面情绪占比 ${negativeRate}%，超过预警阈值。建议关注未满足问题列表。`
+    } else {
+      sentimentAlert.show = false
+    }
+
+    sentimentAlert.negativeRate = negativeRate
+  } catch (e) {
+    console.warn('加载情感预警失败:', e)
+  }
+}
+
 async function refreshAll() {
-  await Promise.all([loadSummary(), loadTrend(30), loadKnowledgeStats()])
+  await Promise.all([loadSummary(), loadTrend(30), loadKnowledgeStats(), loadSentimentAlert()])
 }
 
 onMounted(() => refreshAll())
@@ -676,6 +745,49 @@ onUnmounted(() => disposeAllCharts())
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
+}
+
+/* 情感预警卡片 */
+.alert-card {
+  border-left: 4px solid transparent;
+  transition: all 0.3s;
+}
+.alert-card.warning {
+  border-left-color: #f0d66f;
+  background: linear-gradient(135deg, rgba(240, 214, 111, 0.12), #fffaf0);
+}
+.alert-card.danger {
+  border-left-color: #e88b8b;
+  background: linear-gradient(135deg, rgba(232, 139, 139, 0.14), #fffaf0);
+  animation: alertPulse 2s ease-in-out infinite;
+}
+@keyframes alertPulse {
+  0%, 100% { background: linear-gradient(135deg, rgba(232, 139, 139, 0.14), #fffaf0); }
+  50% { background: linear-gradient(135deg, rgba(232, 139, 139, 0.22), #fff5f5); }
+}
+.alert-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+}
+.alert-card.warning h3 { color: #a98621; }
+.alert-card.danger h3 { color: #c0392b; }
+.alert-msg {
+  margin: 8px 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-regular);
+}
+.alert-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.alert-stats strong {
+  color: var(--text-primary);
+  font-size: 16px;
 }
 
 @media (max-width: 1280px) {
